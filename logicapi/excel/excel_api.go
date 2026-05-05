@@ -22,7 +22,7 @@ func init() {
 // @Param file formData file true "要上传的 Excel 文件"
 // @Param user_id formData string false "用户 ID"
 // @Success 200 {object} viewmodels.UploadPhoneExcelRsp
-// @Router /update [put]
+// @Router /upload_excel [POST]
 func UploadPhoneExcel(c *gin.Context) {
 
 	var req viewmodels.UploadPhoneExcelReq

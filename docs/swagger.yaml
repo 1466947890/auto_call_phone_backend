@@ -26,8 +26,8 @@ definitions:
 info:
   contact: {}
 paths:
-  /update:
-    put:
+  /upload_excel:
+    post:
       consumes:
       - multipart/form-data
       description: Excel上传电话号码

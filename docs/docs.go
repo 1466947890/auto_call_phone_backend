@@ -15,8 +15,8 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/update": {
-            "put": {
+        "/upload_excel": {
+            "post": {
                 "description": "Excel上传电话号码",
                 "consumes": [
                     "multipart/form-data"
