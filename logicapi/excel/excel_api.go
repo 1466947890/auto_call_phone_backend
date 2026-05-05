@@ -33,11 +33,13 @@ func UploadPhoneExcel(c *gin.Context) {
 	file, err := req.File.Open()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	defer file.Close()
 	rsp, err := excelService.UploadPhoneExcel(c, nil, &req)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, rsp)
 
