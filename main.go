@@ -15,4 +15,6 @@ func main() {
 func initGin() {
 	router := gin.Default()
 	router.GET("/upload_excel", phone.GetPhoneList)
+
+	router.Run(":80")
 }
