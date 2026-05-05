@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/update": {
             "put": {
-                "description": "update",
+                "description": "Excel上传电话号码",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -25,9 +25,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "测试"
+                    "Excel模块"
                 ],
-                "summary": "更新用户信息",
+                "summary": "Excel上传电话号码",
                 "parameters": [
                     {
                         "type": "file",

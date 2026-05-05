@@ -30,7 +30,7 @@ paths:
     put:
       consumes:
       - multipart/form-data
-      description: update
+      description: Excel上传电话号码
       parameters:
       - description: 要上传的 Excel 文件
         in: formData
@@ -48,7 +48,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/viewmodels.UploadPhoneExcelRsp'
-      summary: 更新用户信息
+      summary: Excel上传电话号码
       tags:
-      - 测试
+      - Excel模块
 swagger: "2.0"
