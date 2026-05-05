@@ -10,6 +10,7 @@ import (
 func main() {
 	// 数据库初始化
 	fmt.Println("init mysql .....")
+	initGin()
 }
 
 func initGin() {
