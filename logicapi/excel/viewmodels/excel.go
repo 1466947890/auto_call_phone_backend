@@ -9,14 +9,14 @@ type UploadPhoneExcelReq struct {
 }
 
 type UploadPhoneExcelRsp struct {
-	List           []*PhoneStatus `json:"list"`
-	EffectiveCount int            `json:"effective_count"` // 有效数量
-	RepeatCount    int            `json:"repeat"`
-	Total          int            `json:"int"` // 总共数量
+	PhoneList      []PhoneInfo `json:"phone_list"`
+	EffectiveCount int         `json:"effective_count"` // 有效数量
+	RepeatCount    int         `json:"repeat"`
+	Total          int         `json:"int"` // 总共数量
 }
 
-type PhoneStatus struct {
-	PhoneNumber int    `json:"phone_number"`
+type PhoneInfo struct {
+	PhoneNumber string `json:"phone_number"`
 	Remark      string `json:"remark"`
 	Status      int    `json:"status"`
 }
