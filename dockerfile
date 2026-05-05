@@ -1,5 +1,5 @@
 FROM golang
-LABEL  北稚
+LABEL  author="北稚"
 WORKDIR /go/src/
 COPY . .
 EXPOSE 80
