@@ -1,7 +1,7 @@
 package main
 
 import (
-	"auto_call_phone/logicapi/phone"
+	"auto_call_phone/logicapi/excel"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +15,7 @@ func main() {
 
 func initGin() {
 	router := gin.Default()
-	router.GET("/upload_excel", phone.GetPhoneList)
+	router.GET("/upload_excel", excel.UploadPhoneExcel)
 
 	router.Run(":80")
 }
