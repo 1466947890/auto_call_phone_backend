@@ -1,8 +1,11 @@
 package viewmodels
 
+import "mime/multipart"
+
 type UploadPhoneExcelReq struct {
-	UserId   string
-	FilePath string
+	UserId string `json:"user_id"`
+	// swagger:ignore
+	File *multipart.FileHeader `form:"file"`
 }
 
 type UploadPhoneExcelRsp struct {
