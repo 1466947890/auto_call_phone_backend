@@ -19,7 +19,7 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
       - name: Start build dockerfile
         run: |
-          docker build -t auto-call-phone .
+          docker rmi auto-call-phone &&  docker build -t auto-call-phone .
       - name: Start run dockerfile
         run: |
-          docker run -d -p 8200:80 --name auto-call-phone auto-call-phone
+          docker stop auto-call-phone && docker rm auto-call-phone && docker run -d -p 8200:80 --name auto-call-phone auto-call-phone
