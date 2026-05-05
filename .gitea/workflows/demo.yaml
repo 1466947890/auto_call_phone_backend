@@ -17,3 +17,6 @@ jobs:
         run: |
           ls ${{ gitea.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Start build dockerfile
+        run: |
+          docker build -t auto-call-phone .
