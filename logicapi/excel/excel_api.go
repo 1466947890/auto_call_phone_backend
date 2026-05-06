@@ -1,6 +1,7 @@
 package excel
 
 import (
+	"auto_call_phone/common/handle"
 	"auto_call_phone/logicapi/excel/service"
 	"auto_call_phone/logicapi/excel/viewmodels"
 	"net/http"
@@ -24,23 +25,26 @@ func init() {
 // @Success 200 {object} viewmodels.UploadPhoneExcelRsp
 // @Router /upload_excel [POST]
 func UploadPhoneExcel(c *gin.Context) {
-
 	var req viewmodels.UploadPhoneExcelReq
 	// 接收文件
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
 	}
 	file, err := req.File.Open()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		handle.RespError(c, http.StatusBadRequest, err)
 		return
 	}
 	defer file.Close()
 	rsp, err := excelService.UploadPhoneExcel(c, nil, &req)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		handle.RespError(c, http.StatusBadRequest, err)
 		return
 	}
-	c.JSON(http.StatusOK, rsp)
+	handle.CommonRsp(c, rsp, err)
+}
+
+func ReadPhoneExcel(c *gin.Context) {
 
 }

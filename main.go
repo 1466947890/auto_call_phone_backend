@@ -15,7 +15,9 @@ func main() {
 
 func initGin() {
 	router := gin.Default()
-	router.POST("/upload_excel", excel.UploadPhoneExcel)
+
+	adminRouter := router.Group("/v1/admin")
+	excel.RegisterAdmin(adminRouter)
 
 	router.Run(":80")
 }
