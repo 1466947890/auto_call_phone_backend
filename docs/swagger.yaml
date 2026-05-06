@@ -8,13 +8,6 @@ definitions:
       status:
         type: integer
     type: object
-  viewmodels.UploadPhoneExcelReq:
-    properties:
-      filePath:
-        type: string
-      userId:
-        type: string
-    type: object
   viewmodels.UploadPhoneExcelRsp:
     properties:
       effective_count:
@@ -33,18 +26,21 @@ definitions:
 info:
   contact: {}
 paths:
-  /update:
-    put:
+  /upload_excel:
+    post:
       consumes:
-      - application/json
-      description: update
+      - multipart/form-data
+      description: Excel上传电话号码
       parameters:
-      - description: 用户更新后信息
-        in: body
-        name: Object
+      - description: 要上传的 Excel 文件
+        in: formData
+        name: file
         required: true
-        schema:
-          $ref: '#/definitions/viewmodels.UploadPhoneExcelReq'
+        type: file
+      - description: 用户 ID
+        in: formData
+        name: user_id
+        type: string
       produces:
       - application/json
       responses:
@@ -52,7 +48,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/viewmodels.UploadPhoneExcelRsp'
-      summary: 更新用户信息
+      summary: Excel上传电话号码
       tags:
-      - 测试4
+      - Excel模块
 swagger: "2.0"

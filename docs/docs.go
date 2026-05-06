@@ -15,28 +15,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/update": {
-            "put": {
-                "description": "update",
+        "/upload_excel": {
+            "post": {
+                "description": "Excel上传电话号码",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "测试4"
+                    "Excel模块"
                 ],
-                "summary": "更新用户信息",
+                "summary": "Excel上传电话号码",
                 "parameters": [
                     {
-                        "description": "用户更新后信息",
-                        "name": "Object",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/viewmodels.UploadPhoneExcelReq"
-                        }
+                        "type": "file",
+                        "description": "要上传的 Excel 文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户 ID",
+                        "name": "user_id",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -62,17 +66,6 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
-                }
-            }
-        },
-        "viewmodels.UploadPhoneExcelReq": {
-            "type": "object",
-            "properties": {
-                "filePath": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
                 }
             }
         },
