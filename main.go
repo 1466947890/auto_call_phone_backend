@@ -13,7 +13,7 @@ func main() {
 	// 数据库初始化
 	fmt.Println("init mysql .....")
 	if err := repo.InitGrom(); err != nil {
-		log.Panicln("fail to init mysql : ", err.Error())
+		log.Fatalln("fail to init mysql : ", err.Error())
 	}
 
 	initGin()
