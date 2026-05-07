@@ -23,7 +23,7 @@ func init() {
 // @Param file formData file true "要上传的 Excel 文件"
 // @Param user_id formData string false "用户 ID"
 // @Success 200 {object} viewmodels.UploadPhoneExcelRsp
-// @Router /v1/admin/upload_excel [POST]
+// @Router /v1/admin/excel/upload_excel [POST]
 func UploadPhoneExcel(c *gin.Context) {
 	var req viewmodels.UploadPhoneExcelReq
 	// 接收文件
@@ -52,7 +52,7 @@ func UploadPhoneExcel(c *gin.Context) {
 // @Produce application/json
 // @Param req body viewmodels.GetPhonesReq true "查询信息"
 // @Success 200 {object} viewmodels.GetPhonesRsp
-// @Router /v1/admin/get_phones [POST]
+// @Router /v1/admin/excel/get_phones [POST]
 func GetPhones(c *gin.Context) {
 
 }
