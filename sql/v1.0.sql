@@ -16,5 +16,7 @@ CREATE TABLE `device_phone` (
     remarks VARCHAR(256) NOT NULL DEFAULT '' COMMENT '备注',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    UNIQUE KEY `uk_phone_device` (`phone_number`, `device_id`)
+    deleted_at DATETIME NULL DEFAULT NULL COMMENT '软删除时间',
+    UNIQUE KEY `uk_phone_device` (`phone_number`, `device_id`),
+    KEY `idx_device_phone_deleted_at` (`deleted_at`)
 );

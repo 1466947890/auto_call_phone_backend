@@ -60,3 +60,47 @@ func GetPhones(c *gin.Context) {
 	}
 	handle.CommonRsp(c, rsp, err)
 }
+
+// @Summary 软删除电话号码
+// @Description 根据ID软删除电话号码
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.DeletePhoneReq true "删除参数"
+// @Success 200 {object} viewmodels.DeletePhoneRsp
+// @Router /v1/admin/excel/delete_phone [POST]
+func DeletePhone(c *gin.Context) {
+	var req viewmodels.DeletePhoneReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.DeletePhone(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
+}
+
+// @Summary 编辑电话号码
+// @Description 根据ID编辑电话号码的备注与状态
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.UpdatePhoneReq true "编辑参数"
+// @Success 200 {object} viewmodels.UpdatePhoneRsp
+// @Router /v1/admin/excel/update_phone [POST]
+func UpdatePhone(c *gin.Context) {
+	var req viewmodels.UpdatePhoneReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.UpdatePhone(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
+}

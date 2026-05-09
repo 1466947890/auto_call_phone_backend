@@ -60,13 +60,13 @@ func (p ExcelService) UploadPhoneExcel(c context.Context, commonParams *base.Com
 		}, nil
 	}
 
-	// 查询数据库已存在的号码
+	// 查询数据库已存在的号码（含软删除，软删的也视为已存在，不重复插入）
 	phones := make([]string, 0, len(uniq))
 	for _, r := range uniq {
 		phones = append(phones, r.PhoneNumber)
 	}
 	var existed []string
-	if err := repo.DB.WithContext(c).
+	if err := repo.DB.WithContext(c).Unscoped().
 		Model(&datamodels.DevicePhone{}).
 		Where("device_id = ? AND phone_number IN ?", req.DeviceID, phones).
 		Pluck("phone_number", &existed).Error; err != nil {
@@ -122,6 +122,7 @@ func (p ExcelService) GetPhones(c context.Context, commonParams *base.CommonPara
 	list := make([]viewmodels.PhoneInfo, 0, len(rows))
 	for _, r := range rows {
 		list = append(list, viewmodels.PhoneInfo{
+			ID:          r.ID,
 			PhoneNumber: r.PhoneNumber,
 			Remark:      r.Remarks,
 			Status:      int(r.Status),
@@ -130,6 +131,61 @@ func (p ExcelService) GetPhones(c context.Context, commonParams *base.CommonPara
 	return &viewmodels.GetPhonesRsp{
 		PhoneList: list,
 		Total:     len(list),
+	}, nil
+}
+
+func (p ExcelService) DeletePhone(c context.Context, commonParams *base.CommonParams, req *viewmodels.DeletePhoneReq) (*viewmodels.DeletePhoneRsp, error) {
+	if req.ID <= 0 {
+		return nil, errors.New("id is required")
+	}
+	res := repo.DB.WithContext(c).Where("id = ?", req.ID).Delete(&datamodels.DevicePhone{})
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, errors.New("phone not found")
+	}
+	return &viewmodels.DeletePhoneRsp{ID: req.ID}, nil
+}
+
+func (p ExcelService) UpdatePhone(c context.Context, commonParams *base.CommonParams, req *viewmodels.UpdatePhoneReq) (*viewmodels.UpdatePhoneRsp, error) {
+	if req.ID <= 0 {
+		return nil, errors.New("id is required")
+	}
+	if req.Remark == nil && req.Status == nil {
+		return nil, errors.New("nothing to update")
+	}
+
+	updates := make(map[string]interface{}, 2)
+	if req.Remark != nil {
+		updates["remarks"] = *req.Remark
+	}
+	if req.Status != nil {
+		updates["status"] = int8(*req.Status)
+	}
+
+	res := repo.DB.WithContext(c).
+		Model(&datamodels.DevicePhone{}).
+		Where("id = ?", req.ID).
+		Updates(updates)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, errors.New("phone not found")
+	}
+
+	var row datamodels.DevicePhone
+	if err := repo.DB.WithContext(c).Where("id = ?", req.ID).First(&row).Error; err != nil {
+		return nil, err
+	}
+	return &viewmodels.UpdatePhoneRsp{
+		PhoneInfo: viewmodels.PhoneInfo{
+			ID:          row.ID,
+			PhoneNumber: row.PhoneNumber,
+			Remark:      row.Remarks,
+			Status:      int(row.Status),
+		},
 	}, nil
 }
 

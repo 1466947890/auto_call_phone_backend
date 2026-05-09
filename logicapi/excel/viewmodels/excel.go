@@ -19,6 +19,7 @@ type UploadPhoneExcelRsp struct {
 }
 
 type PhoneInfo struct {
+	ID          int64  `json:"id"`
 	PhoneNumber string `json:"phone_number"`
 	Remark      string `json:"remark"`
 	Status      int    `json:"status"`
@@ -32,4 +33,24 @@ type GetPhonesReq struct {
 type GetPhonesRsp struct {
 	PhoneList []PhoneInfo `json:"phone_list"` // 电话号码列表
 	Total     int         `json:"total"`      // 总数
+}
+
+// ===== 接口：软删除电话号码 =====
+type DeletePhoneReq struct {
+	ID int64 `json:"id" binding:"required"` // 电话号码记录ID
+}
+
+type DeletePhoneRsp struct {
+	ID int64 `json:"id"` // 已删除的记录ID
+}
+
+// ===== 接口：编辑电话号码备注/状态 =====
+type UpdatePhoneReq struct {
+	ID     int64   `json:"id" binding:"required"` // 电话号码记录ID
+	Remark *string `json:"remark"`                // 备注（可选）
+	Status *int    `json:"status"`                // 状态（可选）
+}
+
+type UpdatePhoneRsp struct {
+	PhoneInfo
 }
