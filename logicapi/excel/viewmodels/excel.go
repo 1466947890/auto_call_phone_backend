@@ -5,16 +5,17 @@ import "mime/multipart"
 // ===== 接口：上传Excel接口 =====
 
 type UploadPhoneExcelReq struct {
-	UserId string `json:"user_id"`
+	UserId   string `form:"user_id" json:"user_id"`
+	DeviceID string `form:"device_id" json:"device_id"`
 	// swagger:ignore
-	File *multipart.FileHeader `form:"file"`
+	File *multipart.FileHeader `form:"file" binding:"required"`
 }
 
 type UploadPhoneExcelRsp struct {
 	PhoneList      []PhoneInfo `json:"phone_list"`      // 电话号码列表
 	EffectiveCount int         `json:"effective_count"` // 有效数量
-	RepeatCount    int         `json:"repeat"`          // 重复数量
-	Total          int         `json:"int"`             // 总共数量
+	RepeatCount    int         `json:"repeat_count"`    // 重复数量
+	Total          int         `json:"total"`           // 总共数量
 }
 
 type PhoneInfo struct {
@@ -29,5 +30,6 @@ type GetPhonesReq struct {
 }
 
 type GetPhonesRsp struct {
-	PhoneList []string `json:"phone_list"` // 电话号码列表
+	PhoneList []PhoneInfo `json:"phone_list"` // 电话号码列表
+	Total     int         `json:"total"`      // 总数
 }

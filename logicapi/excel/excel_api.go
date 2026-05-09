@@ -21,22 +21,16 @@ func init() {
 // @Accept multipart/form-data
 // @Produce application/json
 // @Param file formData file true "要上传的 Excel 文件"
+// @Param device_id formData string true "设备 ID"
 // @Param user_id formData string false "用户 ID"
 // @Success 200 {object} viewmodels.UploadPhoneExcelRsp
 // @Router /v1/admin/excel/upload_excel [POST]
 func UploadPhoneExcel(c *gin.Context) {
 	var req viewmodels.UploadPhoneExcelReq
-	// 接收文件
 	if err := c.ShouldBind(&req); err != nil {
 		handle.RespError(c, http.StatusBadRequest, err)
 		return
 	}
-	file, err := req.File.Open()
-	if err != nil {
-		handle.RespError(c, http.StatusBadRequest, err)
-		return
-	}
-	defer file.Close()
 	rsp, err := excelService.UploadPhoneExcel(c, nil, &req)
 	if err != nil {
 		handle.RespError(c, http.StatusBadRequest, err)
@@ -54,5 +48,15 @@ func UploadPhoneExcel(c *gin.Context) {
 // @Success 200 {object} viewmodels.GetPhonesRsp
 // @Router /v1/admin/excel/get_phones [POST]
 func GetPhones(c *gin.Context) {
-
+	var req viewmodels.GetPhonesReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.GetPhones(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
 }

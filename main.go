@@ -15,7 +15,6 @@ func main() {
 	if err := repo.InitGrom(); err != nil {
 		log.Fatalln("fail to init mysql : ", err.Error())
 	}
-
 	initGin()
 }
 
