@@ -148,3 +148,25 @@ func UpdateClientPhoneStatus(c *gin.Context) {
 	}
 	handle.CommonRsp(c, rsp, err)
 }
+
+// @Summary 注册设备唯一标识
+// @Description 注册设备唯一标识，如果设备已存在则不重复注册
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.RegisterDeviceReq true "注册参数"
+// @Success 200 {object} viewmodels.RegisterDeviceRsp
+// @Router /v1/client/excel/register_device [POST]
+func RegisterDevice(c *gin.Context) {
+	var req viewmodels.RegisterDeviceReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.RegisterDevice(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
+}

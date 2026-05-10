@@ -264,6 +264,28 @@ func (p ExcelService) UpdateClientPhoneStatus(c context.Context, commonParams *b
 	}, nil
 }
 
+func (p ExcelService) RegisterDevice(c context.Context, commonParams *base.CommonParams, req *viewmodels.RegisterDeviceReq) (*viewmodels.RegisterDeviceRsp, error) {
+	if strings.TrimSpace(req.DeviceID) == "" {
+		return nil, errors.New("device_id is required")
+	}
+
+	device := datamodels.UserDevice{
+		DeviceID: req.DeviceID,
+	}
+	res := repo.DB.WithContext(c).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(&device)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	created := res.RowsAffected > 0
+	return &viewmodels.RegisterDeviceRsp{
+		DeviceID: req.DeviceID,
+		Created:  created,
+	}, nil
+}
+
 func parseExcel(file io.Reader) ([]viewmodels.PhoneInfo, error) {
 	f, err := excelize.OpenReader(file)
 	if err != nil {

@@ -55,6 +55,15 @@ type UpdatePhoneRsp struct {
 	PhoneInfo
 }
 
+type RegisterDeviceReq struct {
+	DeviceID string `json:"device_id" binding:"required"` // 设备ID
+}
+
+type RegisterDeviceRsp struct {
+	DeviceID string `json:"device_id"`
+	Created  bool   `json:"created"` // 是否新创建设备记录
+}
+
 type UpdateClientPhoneStatusReq struct {
 	DeviceID    string `json:"device_id,omitempty"`             // 设备ID，可选，若全局号码不唯一则需传入
 	PhoneNumber string `json:"phone_number" binding:"required"` // 电话号码
