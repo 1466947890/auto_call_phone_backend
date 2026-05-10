@@ -104,3 +104,25 @@ func UpdatePhone(c *gin.Context) {
 	}
 	handle.CommonRsp(c, rsp, err)
 }
+
+// @Summary C端获取待处理电话号码
+// @Description 获取指定设备的待处理电话号码数组
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.GetClientPhoneReq true "查询参数"
+// @Success 200 {object} viewmodels.GetClentPhoneRsp
+// @Router /v1/client/excel/get_client_phone [POST]
+func GetClentPhone(c *gin.Context) {
+	var req viewmodels.GetClientPhoneReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.GetClientPhone(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
+}

@@ -10,3 +10,7 @@ func RegisterAdmin(router *gin.RouterGroup) {
 	router.POST("/delete_phone", DeletePhone)
 	router.POST("/update_phone", UpdatePhone)
 }
+
+func RegisterClient(router *gin.RouterGroup) {
+	router.POST("/get_client_phone", GetClentPhone)
+}

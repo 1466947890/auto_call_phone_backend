@@ -134,6 +134,27 @@ func (p ExcelService) GetPhones(c context.Context, commonParams *base.CommonPara
 	}, nil
 }
 
+func (p ExcelService) GetClientPhone(c context.Context, commonParams *base.CommonParams, req *viewmodels.GetClientPhoneReq) (*viewmodels.GetClentPhoneRsp, error) {
+	if strings.TrimSpace(req.DeviceID) == "" {
+		return nil, errors.New("device_id is required")
+	}
+	var rows []datamodels.DevicePhone
+	if err := repo.DB.WithContext(c).
+		Where("device_id = ? AND status = ?", req.DeviceID, 0).
+		Order("id ASC").
+		Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	phones := make([]string, 0, len(rows))
+	for _, r := range rows {
+		if r.PhoneNumber == "" {
+			continue
+		}
+		phones = append(phones, r.PhoneNumber)
+	}
+	return &viewmodels.GetClentPhoneRsp{Phones: phones}, nil
+}
+
 func (p ExcelService) DeletePhone(c context.Context, commonParams *base.CommonParams, req *viewmodels.DeletePhoneReq) (*viewmodels.DeletePhoneRsp, error) {
 	if req.ID <= 0 {
 		return nil, errors.New("id is required")

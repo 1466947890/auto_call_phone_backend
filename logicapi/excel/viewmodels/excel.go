@@ -54,3 +54,13 @@ type UpdatePhoneReq struct {
 type UpdatePhoneRsp struct {
 	PhoneInfo
 }
+
+// ===== 接口：C端返回电话号码数组 ======
+
+type GetClientPhoneReq struct {
+	DeviceID string `json:"device_id"`
+}
+
+type GetClentPhoneRsp struct {
+	Phones []string `json:"phones"`
+}

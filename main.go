@@ -22,5 +22,7 @@ func initGin() {
 	router := gin.Default()
 	apiV1Admin := router.Group("/v1/admin")
 	excel.RegisterAdmin(apiV1Admin.Group("/excel"))
+	apiV1Client := router.Group("/v1/client")
+	excel.RegisterClient(apiV1Client.Group("/excel"))
 	router.Run(":80")
 }
