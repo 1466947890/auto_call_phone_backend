@@ -55,6 +55,17 @@ type UpdatePhoneRsp struct {
 	PhoneInfo
 }
 
+type UpdateClientPhoneStatusReq struct {
+	DeviceID    string `json:"device_id,omitempty"`             // 设备ID，可选，若全局号码不唯一则需传入
+	PhoneNumber string `json:"phone_number" binding:"required"` // 电话号码
+	Status      int    `json:"status" binding:"required"`       // 新状态，0-待拨打，1-已拨打，2-有意向，3-无意向
+}
+
+type UpdateClientPhoneStatusRsp struct {
+	ID     int64 `json:"id"`
+	Status int   `json:"status"`
+}
+
 // ===== 接口：C端返回电话号码数组 ======
 
 type GetClientPhoneReq struct {

@@ -13,4 +13,5 @@ func RegisterAdmin(router *gin.RouterGroup) {
 
 func RegisterClient(router *gin.RouterGroup) {
 	router.POST("/get_client_phone", GetClentPhone)
+	router.POST("/update_phone_status", UpdateClientPhoneStatus)
 }

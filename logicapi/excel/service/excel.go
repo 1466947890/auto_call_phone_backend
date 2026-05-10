@@ -86,7 +86,7 @@ func (p ExcelService) UploadPhoneExcel(c context.Context, commonParams *base.Com
 		toInsert = append(toInsert, datamodels.DevicePhone{
 			PhoneNumber: r.PhoneNumber,
 			DeviceID:    req.DeviceID,
-			Status:      int8(r.Status),
+			Status:      datamodels.PhoneStatus(r.Status),
 			Remarks:     r.Remark,
 		})
 		effective = append(effective, r)
@@ -140,7 +140,7 @@ func (p ExcelService) GetClientPhone(c context.Context, commonParams *base.Commo
 	}
 	var rows []datamodels.DevicePhone
 	if err := repo.DB.WithContext(c).
-		Where("device_id = ? AND status = ?", req.DeviceID, 0).
+		Where("device_id = ? AND status = ?", req.DeviceID, datamodels.PhoneStatusPending).
 		Order("id ASC").
 		Find(&rows).Error; err != nil {
 		return nil, err
@@ -207,6 +207,49 @@ func (p ExcelService) UpdatePhone(c context.Context, commonParams *base.CommonPa
 			Remark:      row.Remarks,
 			Status:      int(row.Status),
 		},
+	}, nil
+}
+
+func (p ExcelService) UpdateClientPhoneStatus(c context.Context, commonParams *base.CommonParams, req *viewmodels.UpdateClientPhoneStatusReq) (*viewmodels.UpdateClientPhoneStatusRsp, error) {
+	if strings.TrimSpace(req.PhoneNumber) == "" {
+		return nil, errors.New("phone_number is required")
+	}
+	if req.Status < 0 || req.Status > 3 {
+		return nil, errors.New("status must be 0-3")
+	}
+
+	query := repo.DB.WithContext(c).Model(&datamodels.DevicePhone{}).Where("phone_number = ?", req.PhoneNumber)
+	if strings.TrimSpace(req.DeviceID) != "" {
+		query = query.Where("device_id = ?", req.DeviceID)
+	}
+
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		return nil, errors.New("phone not found")
+	}
+	if count > 1 && strings.TrimSpace(req.DeviceID) == "" {
+		return nil, errors.New("multiple records found; device_id is required")
+	}
+
+	var row datamodels.DevicePhone
+	if err := query.First(&row).Error; err != nil {
+		return nil, err
+	}
+
+	res := query.Update("status", datamodels.PhoneStatus(req.Status))
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, errors.New("phone not found")
+	}
+
+	return &viewmodels.UpdateClientPhoneStatusRsp{
+		ID:     row.ID,
+		Status: req.Status,
 	}, nil
 }
 

@@ -126,3 +126,25 @@ func GetClentPhone(c *gin.Context) {
 	}
 	handle.CommonRsp(c, rsp, err)
 }
+
+// @Summary C端更新电话号码状态
+// @Description 根据电话号码更新当前状态，仅支持 C 端调用
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.UpdateClientPhoneStatusReq true "更新参数"
+// @Success 200 {object} viewmodels.UpdateClientPhoneStatusRsp
+// @Router /v1/client/excel/update_phone_status [POST]
+func UpdateClientPhoneStatus(c *gin.Context) {
+	var req viewmodels.UpdateClientPhoneStatusReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.UpdateClientPhoneStatus(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
+}
