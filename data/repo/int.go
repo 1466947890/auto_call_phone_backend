@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"auto_call_phone/data/datamodels"
+	"context"
 	"fmt"
 	"os"
 
@@ -36,4 +38,16 @@ func getEnv(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// GetPendingPhonesByDeviceID 获取指定设备ID的待处理电话号码列表
+func GetPendingPhonesByDeviceID(ctx context.Context, deviceID string) ([]datamodels.DevicePhone, error) {
+	var rows []datamodels.DevicePhone
+	if err := DB.WithContext(ctx).
+		Where("device_id = ? AND status = ?", deviceID, datamodels.PhoneStatusPending).
+		Order("id ASC").
+		Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
 }

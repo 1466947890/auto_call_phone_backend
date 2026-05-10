@@ -178,11 +178,8 @@ func (p ExcelService) GetClientPhone(c context.Context, commonParams *base.Commo
 	if strings.TrimSpace(req.DeviceID) == "" {
 		return nil, errors.New("device_id is required")
 	}
-	var rows []datamodels.DevicePhone
-	if err := repo.DB.WithContext(c).
-		Where("device_id = ? AND status = ?", req.DeviceID, datamodels.PhoneStatusPending).
-		Order("id ASC").
-		Find(&rows).Error; err != nil {
+	rows, err := repo.GetPendingPhonesByDeviceID(c, req.DeviceID)
+	if err != nil {
 		return nil, err
 	}
 	phones := make([]string, 0, len(rows))
