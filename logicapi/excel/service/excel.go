@@ -65,22 +65,33 @@ func (p ExcelService) UploadPhoneExcel(c context.Context, commonParams *base.Com
 	for _, r := range uniq {
 		phones = append(phones, r.PhoneNumber)
 	}
-	var existed []string
+	var rows []datamodels.DevicePhone
 	if err := repo.DB.WithContext(c).Unscoped().
-		Model(&datamodels.DevicePhone{}).
 		Where("device_id = ? AND phone_number IN ?", req.DeviceID, phones).
-		Pluck("phone_number", &existed).Error; err != nil {
+		Find(&rows).Error; err != nil {
 		return nil, err
 	}
-	existedSet := make(map[string]struct{}, len(existed))
-	for _, p := range existed {
-		existedSet[p] = struct{}{}
+	existed := make(map[string]datamodels.DevicePhone, len(rows))
+	for _, row := range rows {
+		existed[row.PhoneNumber] = row
 	}
 
 	toInsert := make([]datamodels.DevicePhone, 0, len(uniq))
 	effective := make([]viewmodels.PhoneInfo, 0, len(uniq))
 	for _, r := range uniq {
-		if _, ok := existedSet[r.PhoneNumber]; ok {
+		if row, ok := existed[r.PhoneNumber]; ok {
+			if row.DeletedAt.Valid {
+				if err := repo.DB.WithContext(c).Unscoped().
+					Model(&datamodels.DevicePhone{}).
+					Where("id = ?", row.ID).
+					Updates(map[string]interface{}{
+						"deleted_at": nil,
+						"status":     datamodels.PhoneStatusPending,
+					}).Error; err != nil {
+					return nil, err
+				}
+				effective = append(effective, r)
+			}
 			continue
 		}
 		toInsert = append(toInsert, datamodels.DevicePhone{
