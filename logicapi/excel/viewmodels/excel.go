@@ -35,6 +35,14 @@ type GetPhonesRsp struct {
 	Total     int         `json:"total"`      // 总数
 }
 
+type GetDevicesReq struct {
+}
+
+type GetDevicesRsp struct {
+	DeviceList []string `json:"device_list"`
+	Total      int      `json:"total"`
+}
+
 // ===== 接口：软删除电话号码 =====
 type DeletePhoneReq struct {
 	ID int64 `json:"id" binding:"required"` // 电话号码记录ID

@@ -61,6 +61,28 @@ func GetPhones(c *gin.Context) {
 	handle.CommonRsp(c, rsp, err)
 }
 
+// @Summary 获取全部设备列表
+// @Description 获取已注册的全部设备唯一标识列表
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.GetDevicesReq true "查询参数"
+// @Success 200 {object} viewmodels.GetDevicesRsp
+// @Router /v1/admin/excel/get_devices [POST]
+func GetDevices(c *gin.Context) {
+	var req viewmodels.GetDevicesReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.GetDevices(c, nil, &req)
+	if err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	handle.CommonRsp(c, rsp, err)
+}
+
 // @Summary 软删除电话号码
 // @Description 根据ID软删除电话号码
 // @Tags Excel模块

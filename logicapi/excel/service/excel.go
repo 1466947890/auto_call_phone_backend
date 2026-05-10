@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/xuri/excelize/v2"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -25,6 +26,17 @@ func (p ExcelService) UploadPhoneExcel(c context.Context, commonParams *base.Com
 	if strings.TrimSpace(req.DeviceID) == "" {
 		return nil, errors.New("device_id is required")
 	}
+
+	var device datamodels.UserDevice
+	if err := repo.DB.WithContext(c).
+		Where("device_id = ?", req.DeviceID).
+		First(&device).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("device_id is not registered")
+		}
+		return nil, err
+	}
+
 	file, err := req.File.Open()
 	if err != nil {
 		return nil, err
@@ -142,6 +154,23 @@ func (p ExcelService) GetPhones(c context.Context, commonParams *base.CommonPara
 	return &viewmodels.GetPhonesRsp{
 		PhoneList: list,
 		Total:     len(list),
+	}, nil
+}
+
+func (p ExcelService) GetDevices(c context.Context, commonParams *base.CommonParams, req *viewmodels.GetDevicesReq) (*viewmodels.GetDevicesRsp, error) {
+	var rows []datamodels.UserDevice
+	if err := repo.DB.WithContext(c).
+		Order("id ASC").
+		Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	deviceList := make([]string, 0, len(rows))
+	for _, row := range rows {
+		deviceList = append(deviceList, row.DeviceID)
+	}
+	return &viewmodels.GetDevicesRsp{
+		DeviceList: deviceList,
+		Total:      len(deviceList),
 	}, nil
 }
 
