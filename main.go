@@ -3,6 +3,7 @@ package main
 import (
 	"auto_call_phone/data/repo"
 	"auto_call_phone/logicapi/excel"
+	"auto_call_phone/logicapi/index"
 	"fmt"
 	"log"
 
@@ -20,9 +21,11 @@ func main() {
 
 func initGin() {
 	router := gin.Default()
+
 	apiV1Admin := router.Group("/v1/admin")
 	excel.RegisterAdmin(apiV1Admin.Group("/excel"))
 	apiV1Client := router.Group("/v1/client")
 	excel.RegisterClient(apiV1Client.Group("/excel"))
+	index.RegisterClient(apiV1Client.Group("/"))
 	router.Run(":80")
 }
