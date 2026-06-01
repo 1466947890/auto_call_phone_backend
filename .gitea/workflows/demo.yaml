@@ -25,6 +25,9 @@ jobs:
       - name: Start build dockerfile
         run: |
           docker build -t auto-call-phone .
-      - name: Start run dockerfile
-        run: |
-          docker run -d -p 8200:80 --name auto-call-phone auto-call-phone
+      # - name: Start run dockerfile
+      #   run: |
+      #     docker run -d -p 8200:80 --name auto-call-phone auto-call-phone
+      - name: Start run kubeclt
+        run: | 
+            kubectl apply -f deployment.yaml
