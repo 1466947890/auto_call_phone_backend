@@ -1,33 +1,45 @@
-name: Gitea Actions Demo
-run-name: ${{ gitea.actor }} is testing out Gitea Actions 🚀
-on: [push]
+name: Auto-Call-Phone CI/CD
+run-name: ${{ gitea.actor }} triggered a deployment 🚀
+on:
+  push:
+    branches:
+      - main # 请根据你的实际分支修改
 
 jobs:
-  Explore-Gitea-Actions:
+  Build-and-Deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ gitea.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by Gitea!"
-      - run: echo "🔎 The name of your branch is ${{ gitea.ref }} and your repository is ${{ gitea.repository }}."
+      # 1. 拉取代码 (修复了 404 错误，使用标准 actions 前缀)
       - name: Check out repository code
-        uses: https://gitea.com/actions/checkout@v4
-      - run: echo "💡 The ${{ gitea.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
+        uses: actions/checkout@v4
+
+      # 2. 构建本地 Docker 镜像
+      # 注意：这里假设你的 Dockerfile 在项目根目录
+      - name: Build Docker Image
         run: |
-          ls ${{ gitea.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
-      - name: Clear old container
+          docker build -t auto-call-phone:latest .
+
+      # 3. 部署到 Kubernetes
+      # 使用包含 kubectl 的容器来执行命令
+      - name: Deploy with Kubectl
+        container:
+          image: bitnami/kubectl:latest
+        env:
+          # 从 Gitea Secrets 中获取 kubeconfig 内容
+          # 请确保你已在 Gitea 仓库 Settings -> Secrets 中添加了 KUBECONFIG
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          docker stop auto-call-phone || true
-          docker rm auto-call-phone || true
-          docker rmi auto-call-phone || true
-      - name: Start build dockerfile
-        run: |
-          docker build -t auto-call-phone .
-      # - name: Start run dockerfile
-      #   run: |
-      #     docker run -d -p 8200:80 --name auto-call-phone auto-call-phone
-      - name: Start run kubeclt
-        run: | 
-            kubectl apply -f deployment.yaml
+          # 3.1 写入 K8s 配置文件
+          mkdir -p /root/.kube
+          echo "$KUBECONFIG_CONTENT" > /root/.kube/config
+
+          # 3.2 检查配置是否正确
+          kubectl cluster-info
+          kubectl get nodes
+
+          # 3.3 应用部署配置
+          # 注意：请确保你的 deployment.yaml 中设置了 imagePullPolicy: Never
+          kubectl apply -f deployment.yaml
+
+          # 3.4 等待部署就绪
+          kubectl rollout status deployment/auto-call-phone --timeout=60s
