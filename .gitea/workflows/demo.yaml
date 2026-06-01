@@ -8,7 +8,7 @@ jobs:
     steps:
       # 1. 拉取代码 (修复了 404 错误，使用标准 actions 前缀)
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v4
 
       # 2. 构建本地 Docker 镜像
       # 注意：这里假设你的 Dockerfile 在项目根目录
