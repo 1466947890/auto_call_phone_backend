@@ -1,9 +1,6 @@
 name: Auto-Call-Phone CI/CD
 run-name: ${{ gitea.actor }} triggered a deployment 🚀
-on:
-  push:
-    branches:
-      - main # 请根据你的实际分支修改
+on: [push]
 
 jobs:
   Build-and-Deploy:
