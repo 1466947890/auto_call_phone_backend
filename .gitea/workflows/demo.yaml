@@ -1,6 +1,5 @@
 name: Auto-Call-Phone CI/CD
 run-name: ${{ gitea.actor }} triggered a deployment 🚀
-
 on: [push]
 
 jobs:
