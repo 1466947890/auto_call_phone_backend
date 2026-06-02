@@ -6,26 +6,24 @@ jobs:
   Build-and-Deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码 (保留你指定的写法)
+      # 1. 拉取代码
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
       # ==========================================
-      # 🛡️ 2. 【前置预检】在编译前验证环境
+      # 🛡️ 2. 【前置预检】写入凭证并验证环境
       # ==========================================
       - name: Pre-check K8s Environment
-        container:
-          image: bitnami/kubectl:latest
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
           echo "🔍 [Pre-check] 正在验证 kubectl 工具..."
           if ! command -v kubectl &> /dev/null; then
-              echo "❌ 致命错误: 当前环境中未找到 kubectl 命令！"
+              echo "❌ 致命错误: 当前 Runner 环境中未找到 kubectl 命令！"
               exit 1
           fi
 
-          echo "🔑 [Pre-check] 正在验证 kubeconfig 凭证..."
+          echo "🔑 [Pre-check] 正在写入 kubeconfig 凭证..."
           mkdir -p $HOME/.kube
           printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
@@ -42,11 +40,10 @@ jobs:
 
       # 4. 部署到 Kubernetes
       - name: Deploy with Kubectl
-        container:
-          image: bitnami/kubectl:latest
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
+          # 写入凭证，让 Runner 自带的 kubectl 能连接到集群
           mkdir -p $HOME/.kube
           printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
