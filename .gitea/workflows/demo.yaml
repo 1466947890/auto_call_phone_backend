@@ -6,7 +6,7 @@ jobs:
   Build-and-Deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码 (按你的要求保留原写法)
+      # 1. 拉取代码 (保留你指定的写法)
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
@@ -14,18 +14,14 @@ jobs:
       # 🛡️ 2. 【前置预检】在编译前验证环境
       # ==========================================
       - name: Pre-check K8s Environment
+        container:
+          image: bitnami/kubectl:latest
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          # 暴力下载安装 kubectl
-          echo "⬇️ 正在下载 kubectl..."
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-          
           echo "🔍 [Pre-check] 正在验证 kubectl 工具..."
           if ! command -v kubectl &> /dev/null; then
-              echo "❌ 致命错误: kubectl 安装失败！"
+              echo "❌ 致命错误: 当前环境中未找到 kubectl 命令！"
               exit 1
           fi
 
@@ -46,17 +42,11 @@ jobs:
 
       # 4. 部署到 Kubernetes
       - name: Deploy with Kubectl
+        container:
+          image: bitnami/kubectl:latest
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          # 部署步骤同样需要确保 kubectl 存在
-          if ! command -v kubectl &> /dev/null; then
-              echo "⬇️ 当前环境未找到 kubectl，正在下载..."
-              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-              chmod +x kubectl
-              sudo mv kubectl /usr/local/bin/
-          fi
-
           mkdir -p $HOME/.kube
           printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
