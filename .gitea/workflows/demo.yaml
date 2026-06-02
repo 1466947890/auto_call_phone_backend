@@ -1,57 +1,59 @@
 name: Auto-Call-Phone CI/CD
-run-name: ${{ gitea.actor }} triggered a deployment 🚀
+run-name: ${{ gitea.actor }} 正在部署应用 🚀
 on: [push]
 
 jobs:
-  Build-and-Deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码 (保留你指定的写法)
+      # 1. 拉取代码 (使用你指定的写法)
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 自动安装 kubectl 工具
+      # 2. 安装 kubectl（国内极速安装 + 验证）
       - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      # 3. 【前置预检】写入凭证并验证环境
-      - name: Pre-check K8s Environment
-        env:
-          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          echo "🔍 [Pre-check] 正在验证 kubectl 工具..."
-          if ! command -v kubectl &> /dev/null; then
-              echo "❌ 致命错误: kubectl 安装失败！"
-              exit 1
-          fi
-          echo "✅ kubectl 工具已就绪"
-
-          echo "🔑 [Pre-check] 正在写入 kubeconfig 凭证..."
-          mkdir -p $HOME/.kube
-          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          # 使用阿里云镜像源极速下载
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
           
-          echo "🌐 [Pre-check] 正在测试集群连通性..."
-          if ! kubectl get nodes &> /dev/null; then
-              echo "❌ 致命错误: kubeconfig 无效或无法连接到 Kubernetes 集群！"
+          # 验证 kubectl 是否安装成功
+          echo "🔍 正在验证 kubectl 安装情况..."
+          if ! command -v kubectl &> /dev/null; then
+              echo "❌ 致命错误: kubectl 安装失败，未找到命令！"
               exit 1
           fi
-          echo "✅ [Pre-check] 环境验证通过，准备开始构建镜像..."
+          kubectl version --client
+          echo "✅ kubectl 安装验证通过！"
 
-      # 4. 构建本地 Docker 镜像
-      - name: Build Docker Image
+      # 3. 登录 Docker Hub（如果你用的是阿里云/腾讯云，请替换对应地址）
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. 构建 Docker 镜像并推送到远程仓库
+      - name: Build and push Docker image
         run: |
-          docker build -t auto-call-phone:latest .
+          # 给镜像打上标签（这里用 git 的提交哈希作为版本号，方便回溯）
+          IMAGE_TAG="${{ gitea.repository }}:${{ gitea.sha }}"
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
 
       # 5. 部署到 Kubernetes
-      - name: Deploy with Kubectl
+      - name: Deploy to Kubernetes
         env:
-          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
         run: |
-          # 写入凭证并执行部署
+          # 把凭证写入容器，让 kubectl 能找到集群
           mkdir -p $HOME/.kube
-          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
           
+          # 替换 deployment.yaml 里的镜像版本（假设你的 k8s yaml 里镜像字段叫 IMAGE_TAG）
+          sed -i "s|IMAGE_TAG|${{ gitea.repository }}:${{ gitea.sha }}|g" deployment.yaml
+          
+          # 执行部署并等待 rollout 完成
           kubectl apply -f deployment.yaml
           kubectl rollout status deployment/auto-call-phone --timeout=90s
