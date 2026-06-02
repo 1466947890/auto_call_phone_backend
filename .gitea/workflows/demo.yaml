@@ -16,22 +16,24 @@ jobs:
       # 🛡️ 2. 【前置预检】在耗时操作前验证环境
       # ==========================================
       - name: Pre-check K8s Environment
-        container:
-          image: bitnami/kubectl:latest 
+        # 使用官方动作自动安装 kubectl，兼容性最好
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
           echo "🔍 [Pre-check] 正在验证 kubectl 工具..."
           if ! command -v kubectl &> /dev/null; then
-              echo "❌ 致命错误: 当前环境中未找到 kubectl 命令！"
+              echo "❌ 致命错误: kubectl 安装失败！"
               exit 1
           fi
 
           echo "🔑 [Pre-check] 正在验证 kubeconfig 凭证..."
-          mkdir -p /root/.kube
-          printf "%s" "$KUBECONFIG_CONTENT" > /root/.kube/config
+          mkdir -p $HOME/.kube
+          printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
-          # 尝试获取节点信息，如果连不上集群，直接在这里报错终止
+          # 尝试获取节点信息，验证集群连通性
           if ! kubectl get nodes &> /dev/null; then
               echo "❌ 致命错误: kubeconfig 无效或无法连接到 Kubernetes 集群！"
               exit 1
@@ -49,14 +51,16 @@ jobs:
       # 🚀 4. 部署到 Kubernetes
       # ==========================================
       - name: Deploy with Kubectl
-        container:
-          image: bitnami/kubectl:latest 
+        # 部署步骤同样需要先安装 kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          # 写入配置文件 (因为步骤间环境不共享，需要重新写入)
-          mkdir -p /root/.kube
-          printf "%s" "$KUBECONFIG_CONTENT" > /root/.kube/config
+          # 写入配置文件
+          mkdir -p $HOME/.kube
+          printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
           echo "🚀 正在应用 deployment.yaml..."
           kubectl apply -f deployment.yaml
