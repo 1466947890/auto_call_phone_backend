@@ -1,42 +1,65 @@
 name: Auto-Call-Phone CI/CD
 run-name: ${{ gitea.actor }} triggered a deployment 🚀
+
 on: [push]
 
 jobs:
   Build-and-Deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      # 1. 拉取代码 (修复了 404 错误，使用标准 actions 前缀)
+      # 1. 拉取代码
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 构建本地 Docker 镜像
-      # 注意：这里假设你的 Dockerfile 在项目根目录
+      # ==========================================
+      # 🛡️ 2. 【前置预检】在耗时操作前验证环境
+      # ==========================================
+      - name: Pre-check K8s Environment
+        container:
+          image: bitnami/kubectl:latest 
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+        run: |
+          echo "🔍 [Pre-check] 正在验证 kubectl 工具..."
+          if ! command -v kubectl &> /dev/null; then
+              echo "❌ 致命错误: 当前环境中未找到 kubectl 命令！"
+              exit 1
+          fi
+
+          echo "🔑 [Pre-check] 正在验证 kubeconfig 凭证..."
+          mkdir -p /root/.kube
+          printf "%s" "$KUBECONFIG_CONTENT" > /root/.kube/config
+          
+          # 尝试获取节点信息，如果连不上集群，直接在这里报错终止
+          if ! kubectl get nodes &> /dev/null; then
+              echo "❌ 致命错误: kubeconfig 无效或无法连接到 Kubernetes 集群！"
+              exit 1
+          fi
+          echo "✅ [Pre-check] 环境验证通过，准备开始构建镜像..."
+
+      # ==========================================
+      # 🐳 3. 【耗时操作】构建本地 Docker 镜像
+      # ==========================================
       - name: Build Docker Image
         run: |
           docker build -t auto-call-phone:latest .
 
-      # 3. 部署到 Kubernetes
-      # 使用包含 kubectl 的容器来执行命令
+      # ==========================================
+      # 🚀 4. 部署到 Kubernetes
+      # ==========================================
       - name: Deploy with Kubectl
         container:
-          image: bitnami/kubectl:latest
+          image: bitnami/kubectl:latest 
         env:
-          # 从 Gitea Secrets 中获取 kubeconfig 内容
-          # 请确保你已在 Gitea 仓库 Settings -> Secrets 中添加了 KUBECONFIG
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          # 3.1 写入 K8s 配置文件
+          # 写入配置文件 (因为步骤间环境不共享，需要重新写入)
           mkdir -p /root/.kube
-          echo "$KUBECONFIG_CONTENT" > /root/.kube/config
-
-          # 3.2 检查配置是否正确
-          kubectl cluster-info
-          kubectl get nodes
-
-          # 3.3 应用部署配置
-          # 注意：请确保你的 deployment.yaml 中设置了 imagePullPolicy: Never
+          printf "%s" "$KUBECONFIG_CONTENT" > /root/.kube/config
+          
+          echo "🚀 正在应用 deployment.yaml..."
           kubectl apply -f deployment.yaml
 
-          # 3.4 等待部署就绪
-          kubectl rollout status deployment/auto-call-phone --timeout=60s
+          echo "⏳ 等待部署滚动更新完成..."
+          kubectl rollout status deployment/auto-call-phone --timeout=90s
