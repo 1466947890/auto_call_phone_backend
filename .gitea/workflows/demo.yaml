@@ -5,23 +5,24 @@ on: [push]
 jobs:
   Build-and-Deploy:
     runs-on: ubuntu-latest
-    
     steps:
-      # 1. 拉取代码
+      # 1. 拉取代码 (按你的要求保留原写法)
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
       # ==========================================
-      # 🛡️ 2. 【前置预检】在耗时操作前验证环境
+      # 🛡️ 2. 【前置预检】在编译前验证环境
       # ==========================================
       - name: Pre-check K8s Environment
-        # 使用官方动作自动安装 kubectl，兼容性最好
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
+          # 暴力下载安装 kubectl
+          echo "⬇️ 正在下载 kubectl..."
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          
           echo "🔍 [Pre-check] 正在验证 kubectl 工具..."
           if ! command -v kubectl &> /dev/null; then
               echo "❌ 致命错误: kubectl 安装失败！"
@@ -32,37 +33,32 @@ jobs:
           mkdir -p $HOME/.kube
           printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
-          # 尝试获取节点信息，验证集群连通性
           if ! kubectl get nodes &> /dev/null; then
               echo "❌ 致命错误: kubeconfig 无效或无法连接到 Kubernetes 集群！"
               exit 1
           fi
           echo "✅ [Pre-check] 环境验证通过，准备开始构建镜像..."
 
-      # ==========================================
-      # 🐳 3. 【耗时操作】构建本地 Docker 镜像
-      # ==========================================
+      # 3. 构建本地 Docker 镜像
       - name: Build Docker Image
         run: |
           docker build -t auto-call-phone:latest .
 
-      # ==========================================
-      # 🚀 4. 部署到 Kubernetes
-      # ==========================================
+      # 4. 部署到 Kubernetes
       - name: Deploy with Kubectl
-        # 部署步骤同样需要先安装 kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
-          # 写入配置文件
+          # 部署步骤同样需要确保 kubectl 存在
+          if ! command -v kubectl &> /dev/null; then
+              echo "⬇️ 当前环境未找到 kubectl，正在下载..."
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
+              sudo mv kubectl /usr/local/bin/
+          fi
+
           mkdir -p $HOME/.kube
           printf "%s" "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           
-          echo "🚀 正在应用 deployment.yaml..."
           kubectl apply -f deployment.yaml
-
-          echo "⏳ 等待部署滚动更新完成..."
           kubectl rollout status deployment/auto-call-phone --timeout=90s
