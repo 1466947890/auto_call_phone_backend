@@ -28,11 +28,7 @@ jobs:
           echo "✅ kubectl 安装验证通过！"
 
       # 3. 登录 Docker Hub（如果你用的是阿里云/腾讯云，请替换对应地址）
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+
 
       # 4. 构建 Docker 镜像并推送到远程仓库
       - name: Build and push Docker image
