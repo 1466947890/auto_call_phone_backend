@@ -5,36 +5,34 @@ on: [push]
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # 【方案二核心】：指定一个包含所有工具（Docker, kubectl等）的镜像
+    container:
+      image: catthehacker/ubuntu:act-latest
+
     steps:
-      # 1. 拉取代码 (使用你指定的写法)
+      # 1. 拉取代码
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 安装 kubectl（国内极速安装 + 验证）
-      - name: Install kubectl
+      # 2. 验证工具是否可用（可选，用于排查错误）
+      - name: Verify Tools
         run: |
-          # 使用阿里云镜像源极速下载
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-          
-          # 验证 kubectl 是否安装成功
-          echo "🔍 正在验证 kubectl 安装情况..."
-          if ! command -v kubectl &> /dev/null; then
-              echo "❌ 致命错误: kubectl 安装失败，未找到命令！"
-              exit 1
-          fi
           kubectl version --client
-          echo "✅ kubectl 安装验证通过！"
+          docker version
 
-      # 3. 登录 Docker Hub（如果你用的是阿里云/腾讯云，请替换对应地址）
-
+      # 3. 登录 Docker Hub
+      # 注意：需要在 Gitea 项目设置中添加 DOCKER_USERNAME 和 DOCKER_PASSWORD
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       # 4. 构建 Docker 镜像并推送到远程仓库
       - name: Build and push Docker image
         run: |
-          # 给镜像打上标签（这里用 git 的提交哈希作为版本号，方便回溯）
+          # 定义镜像标签并存入环境变量供后续步骤使用
           IMAGE_TAG="${{ gitea.repository }}:${{ gitea.sha }}"
+          echo "FULL_IMAGE_NAME=$IMAGE_TAG" >> $GITEA_ENV
+          
           docker build -t $IMAGE_TAG .
           docker push $IMAGE_TAG
 
@@ -43,13 +41,16 @@ jobs:
         env:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
         run: |
-          # 把凭证写入容器，让 kubectl 能找到集群
+          # 配置 K8s 凭证
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
           
-          # 替换 deployment.yaml 里的镜像版本（假设你的 k8s yaml 里镜像字段叫 IMAGE_TAG）
-          sed -i "s|IMAGE_TAG|${{ gitea.repository }}:${{ gitea.sha }}|g" deployment.yaml
+          # 替换 deployment.yaml 里的镜像占位符（假设你文件中写的是 IMAGE_TAG）
+          # 注意这里使用了 $FULL_IMAGE_NAME 环境变量
+          sed -i "s|IMAGE_TAG|$FULL_IMAGE_NAME|g" deployment.yaml
           
-          # 执行部署并等待 rollout 完成
+          # 执行部署
           kubectl apply -f deployment.yaml
+          
+          # 验证部署状态
           kubectl rollout status deployment/auto-call-phone --timeout=90s
