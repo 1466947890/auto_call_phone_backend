@@ -5,32 +5,36 @@ on: [push]
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # 【方案二核心】：指定一个包含所有工具（Docker, kubectl等）的镜像
+    
+    # 使用极速轻量级镜像，内置了 kubectl、bash 和 常用工具（约 100MB 左右）
     container:
-      image: catthehacker/ubuntu:act-latest
+      image: alpine/k8s:1.28.2 # 或者 bitnami/kubectl:1.28
 
     steps:
       # 1. 拉取代码
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 验证工具是否可用（可选，用于排查错误）
+      # 2. 验证工具是否可用
       - name: Verify Tools
         run: |
           kubectl version --client
-          docker version
-      # 5. 部署到 Kubernetes
+          # 注意：在容器(container)内部默认无法直接运行宿主机的 docker 命令，
+          # 如果这里不需要编译镜像，可以把 docker version 这一行删掉，避免报错。
+
+      # 3. 部署到 Kubernetes
       - name: Deploy to Kubernetes
         env:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+          # 确保你在 secrets 或 env 中定义了 FULL_IMAGE_NAME，否则 sed 替换会为空
+          FULL_IMAGE_NAME: ${{ secrets.GITEA_REGISTRY_URL }}/${{ github.repository }}:${{ github.sha }} 
         run: |
           # 配置 K8s 凭证
-          echo "$KUBECONFIG_DATA"
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
           
-          # 替换 deployment.yaml 里的镜像占位符（假设你文件中写的是 IMAGE_TAG）
-          # 注意这里使用了 $FULL_IMAGE_NAME 环境变量
+          # 替换 deployment.yaml 里的镜像占位符
           sed -i "s|IMAGE_TAG|$FULL_IMAGE_NAME|g" deployment.yaml
           
           # 执行部署
