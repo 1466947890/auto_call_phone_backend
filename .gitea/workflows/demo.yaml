@@ -11,9 +11,6 @@ jobs:
       image: alpine/k8s:1.28.2 # 或者 bitnami/kubectl:1.28
 
     steps:
-      # 1. 拉取代码
-      - name: Check out repository code
-        uses: https://gitea.com/actions/checkout@v4
 
       # 2. 验证工具是否可用
       - name: Verify Tools
