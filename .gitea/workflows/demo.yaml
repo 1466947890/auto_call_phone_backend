@@ -13,7 +13,7 @@ jobs:
     steps:
       # 1. 拉取代码
       - name: Check out repository code
-        uses: https://gitea.com/actions/checkout@v4
+        uses: https://gitea.com/actions/checkout@v3
 
       # 2. 验证工具是否可用
       - name: Verify Tools
