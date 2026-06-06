@@ -19,29 +19,13 @@ jobs:
         run: |
           kubectl version --client
           docker version
-
-      # 3. 登录 Docker Hub
-      # 注意：需要在 Gitea 项目设置中添加 DOCKER_USERNAME 和 DOCKER_PASSWORD
-      - name: Login to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      # 4. 构建 Docker 镜像并推送到远程仓库
-      - name: Build and push Docker image
-        run: |
-          # 定义镜像标签并存入环境变量供后续步骤使用
-          IMAGE_TAG="${{ gitea.repository }}:${{ gitea.sha }}"
-          echo "FULL_IMAGE_NAME=$IMAGE_TAG" >> $GITEA_ENV
-          
-          docker build -t $IMAGE_TAG .
-          docker push $IMAGE_TAG
-
       # 5. 部署到 Kubernetes
       - name: Deploy to Kubernetes
         env:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
         run: |
           # 配置 K8s 凭证
+          echo "$KUBECONFIG_DATA"
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
           
