@@ -3,42 +3,54 @@ run-name: ${{ gitea.actor }} 正在部署应用 🚀
 on: [push]
 
 jobs:
-  build-and-deploy:
+  # ==========================================
+  # 任务 1：构建并推送 Docker 镜像（使用默认环境，构建速度极快）
+  # ==========================================
+  build-and-push:
     runs-on: ubuntu-latest
-    
-    # 使用极速轻量级镜像，内置了 kubectl、bash 和 常用工具（约 100MB 左右）
+    steps:
+      # 1. 拉取代码
+      - name: Check out repository code
+        uses: https://gitea.com/actions/checkout@v4
+
+
+
+  # ==========================================
+  # 任务 2：部署到 K8s 集群（使用轻量 alpine/k8s 容器，0 秒下载 kubectl）
+  # ==========================================
+  deploy:
+    needs: build-and-push # 必须等镜像成功构建和推送后，才开始执行部署
+    runs-on: ubuntu-latest
     container:
-      image: alpine/k8s:1.28.2 # 或者 bitnami/kubectl:1.28
+      image: alpine/k8s:1.28.2 # 内置了 git, kubectl, bash, curl 等部署常用工具
 
     steps:
       # 1. 拉取代码
       - name: Check out repository code
-        uses: https://gitea.com/actions/checkout@v3
+        uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 验证工具是否可用
-      - name: Verify Tools
-        run: |
-          kubectl version --client
-          # 注意：在容器(container)内部默认无法直接运行宿主机的 docker 命令，
-          # 如果这里不需要编译镜像，可以把 docker version 这一行删掉，避免报错。
-
-      # 3. 部署到 Kubernetes
+      # 2. 部署到 Kubernetes 并打印临时调试内容
       - name: Deploy to Kubernetes
         env:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
-          # 确保你在 secrets 或 env 中定义了 FULL_IMAGE_NAME，否则 sed 替换会为空
-          FULL_IMAGE_NAME: ${{ secrets.GITEA_REGISTRY_URL }}/${{ github.repository }}:${{ github.sha }} 
+          # 拼接出与任务 1 一致的完整镜像名称
+          FULL_IMAGE_NAME: ${{ secrets.GITEA_REGISTRY_URL }}/${{ gitea.repository }}:${{ gitea.sha }}
         run: |
           # 配置 K8s 凭证
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
           
-          # 替换 deployment.yaml 里的镜像占位符
+          # 【临时调试】直接在控制台打印解密后的 Kubeconfig 完整内容（用于排查格式和确认内容）
+          echo "=== ⏳ 正在打印解密后的 Kubeconfig 完整内容 ==="
+          cat $HOME/.kube/config
+          echo "=========================================="
+          
+          # 替换 deployment.yaml 里的镜像占位符 IMAGE_TAG 为真实的镜像 tag
           sed -i "s|IMAGE_TAG|$FULL_IMAGE_NAME|g" deployment.yaml
           
-          # 执行部署
+          # 执行 K8s 部署
           kubectl apply -f deployment.yaml
           
-          # 验证部署状态
+          # 验证部署状态（请确认您的 K8s Deployment 名称是否为 auto-call-phone）
           kubectl rollout status deployment/auto-call-phone --timeout=90s
