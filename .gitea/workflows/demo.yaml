@@ -6,22 +6,22 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
-    # 核心：改用国内华为云 SWR 代理同步的高速镜像
-    # 1. 彻底解决国内网络无法直接拉取 ghcr.io 的报错
-    # 2. 该镜像内置了 Node.js 环境，彻底解决在容器中无法运行 uses 动作的问题
+    # 核心：使用国内华为云 SWR 代理同步的高速镜像，内置 Node.js 允许正常解析 uses 动作
     container:
       image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/ghcr.io/catthehacker/ubuntu:act-latest
 
     steps:
-      # 1. 正常使用 uses 运行 checkout（由于国内加速镜像内有 Node.js，此处可正常且快速执行）
+      # 1. 正常使用 uses 运行 checkout
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 正常使用 uses 运行 kubectl 安装
+      # 2. 从国内高速镜像源安装 kubectl（解决因外网阻断导致的卡死问题）
       - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'v1.28.2'
+        run: |
+          curl -LO "https://mirrors.aliyun.com/kubernetes/kubectl/v1.28.2/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          mv ./kubectl /usr/local/bin/kubectl
+          kubectl version --client
 
       # 3. 部署到 Kubernetes
       - name: Deploy to Kubernetes
