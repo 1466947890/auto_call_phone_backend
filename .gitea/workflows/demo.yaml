@@ -15,13 +15,6 @@ jobs:
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
 
-      # 2. 从国内高速镜像源安装 kubectl（解决因外网阻断导致的卡死问题）
-      - name: Install kubectl
-        run: |
-          curl -LO "https://mirrors.aliyun.com/kubernetes/kubectl/v1.28.2/bin/linux/amd64/kubectl"
-          chmod +x ./kubectl
-          mv ./kubectl /usr/local/bin/kubectl
-          kubectl version --client
 
       # 3. 部署到 Kubernetes
       - name: Deploy to Kubernetes
