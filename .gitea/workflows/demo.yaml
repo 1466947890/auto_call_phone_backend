@@ -14,7 +14,20 @@ jobs:
       # 1. 正常使用 uses 运行 checkout
       - name: Check out repository code
         uses: https://gitea.com/actions/checkout@v4
-
+        
+      - name: Install kubectl
+        run: |
+          # 1. 明确指定下载文件名，避免文件名错误
+          curl -L --fail -o kubectl https://dl.k8s.io/release/v1.28.2/bin/linux/amd64/kubectl
+          
+          # 2. 赋予可执行权限
+          chmod +x kubectl
+          
+          # 3. 移动到系统路径
+          sudo mv kubectl /usr/local/bin/kubectl
+          
+          # 4. 验证安装
+          kubectl version --client
 
       # 3. 部署到 Kubernetes
       - name: Deploy to Kubernetes
