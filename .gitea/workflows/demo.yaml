@@ -8,7 +8,7 @@ jobs:
     
     # 核心：使用国内华为云 SWR 代理同步的高速镜像，内置 Node.js 允许正常解析 uses 动作
     container:
-      image: registry.cn-hangzhou.aliyuncs.com/lachlanevenson/k8s-kubectl:latest
+      image: registry.cn-hangzhou.aliyuncs.com/bitnami/node:20
 
     steps:
       # 1. 正常使用 uses 运行 checkout
