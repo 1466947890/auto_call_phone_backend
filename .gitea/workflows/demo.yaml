@@ -18,7 +18,7 @@ jobs:
       - name: Install kubectl
         run: |
           # 1. 明确指定下载文件名，避免文件名错误
-          curl -L --fail -o kubectl https://dl.k8s.io/release/v1.28.2/bin/linux/amd64/kubectl
+          curl -L --fail --connect-timeout 10 -o kubectl "https://mirrors.aliyun.com/kubernetes-release/release/v1.28.2/bin/linux/amd64/kubectl"
           
           # 2. 赋予可执行权限
           chmod +x kubectl
