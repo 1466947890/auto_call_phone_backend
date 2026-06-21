@@ -27,5 +27,5 @@ func initGin() {
 	apiV1Client := router.Group("/v1/client")
 	excel.RegisterClient(apiV1Client.Group("/excel"))
 	index.RegisterClient(apiV1Client.Group("/"))
-	router.Run(":80")
+	router.Run(":8000")
 }

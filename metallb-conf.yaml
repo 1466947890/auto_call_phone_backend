@@ -1,0 +1,19 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: k3s-ip-pool
+  namespace: metallb-system
+spec:
+  # 关键修改点：将范围改为单一 IP
+  addresses:
+  - 192.168.31.200/32  # /32 表示锁定这唯一一个 IP，不再是一个范围
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: k3s-l2-adv
+  namespace: metallb-system
+spec:
+  # 这里保持不变，继续广播上面那个池子
+  ipAddressPools:
+  - k3s-ip-pool

@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auto-call-phone-ingress
+  # 删除 annotations 部分
+spec:
+  # 添加 ingressClassName 字段
+  ingressClassName: traefik 
+  rules:
+    - host: auto-api.beizhi.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: auto-call-phone-service
+                port:
+                  number: 80
