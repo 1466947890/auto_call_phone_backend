@@ -51,3 +51,26 @@ func GetPendingPhonesByDeviceID(ctx context.Context, deviceID string) ([]datamod
 	}
 	return rows, nil
 }
+
+// CreateUser 创建用户
+func CreateUser(ctx context.Context, user *datamodels.User) error {
+	return DB.WithContext(ctx).Create(user).Error
+}
+
+// GetUserByUsername 根据用户名获取用户
+func GetUserByUsername(ctx context.Context, username string) (*datamodels.User, error) {
+	var user datamodels.User
+	if err := DB.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetUserDevices 获取用户关联的设备ID列表
+func GetUserDevices(ctx context.Context, userID int64) ([]datamodels.UserDevice, error) {
+	var rows []datamodels.UserDevice
+	if err := DB.WithContext(ctx).Where("user_id = ?", userID).Order("id ASC").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
