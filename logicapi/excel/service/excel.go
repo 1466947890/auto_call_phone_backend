@@ -290,6 +290,97 @@ func (p ExcelService) UpdateClientPhoneStatus(c context.Context, commonParams *b
 	}, nil
 }
 
+func (p ExcelService) BindDevice(c context.Context, commonParams *base.CommonParams, req *viewmodels.BindDeviceReq) (*viewmodels.BindDeviceRsp, error) {
+	if strings.TrimSpace(req.DeviceID) == "" {
+		return nil, errors.New("device_id is required")
+	}
+	if req.UserID <= 0 {
+		return nil, errors.New("user_id is required")
+	}
+
+	if _, err := repo.GetUserByID(c, req.UserID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	if err := repo.BindDeviceToUser(c, req.DeviceID, req.UserID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("device not found")
+		}
+		return nil, err
+	}
+
+	return &viewmodels.BindDeviceRsp{
+		DeviceID: req.DeviceID,
+		UserID:   req.UserID,
+	}, nil
+}
+
+func (p ExcelService) GetOverview(c context.Context, commonParams *base.CommonParams) (*viewmodels.OverviewRsp, error) {
+	totalDevices, err := repo.CountDevices(c)
+	if err != nil {
+		return nil, err
+	}
+	totalPhones, err := repo.CountPhones(c)
+	if err != nil {
+		return nil, err
+	}
+	totalUsers, err := repo.CountUsers(c)
+	if err != nil {
+		return nil, err
+	}
+	unboundDevices, err := repo.CountUnboundDevices(c)
+	if err != nil {
+		return nil, err
+	}
+	phonesByStatus64, err := repo.CountPhonesByStatus(c)
+	if err != nil {
+		return nil, err
+	}
+	phonesByStatus := make(map[int]int, len(phonesByStatus64))
+	for k, v := range phonesByStatus64 {
+		phonesByStatus[k] = int(v)
+	}
+
+	return &viewmodels.OverviewRsp{
+		TotalDevices:   int(totalDevices),
+		TotalPhones:    totalPhones,
+		TotalUsers:     totalUsers,
+		UnboundDevices: unboundDevices,
+		PhonesByStatus: phonesByStatus,
+	}, nil
+}
+
+func (p ExcelService) GetDevicesStats(c context.Context, commonParams *base.CommonParams) (*viewmodels.GetDevicesStatsRsp, error) {
+	rows, err := repo.GetDeviceStats(c)
+	if err != nil {
+		return nil, err
+	}
+	devices := make([]viewmodels.DeviceStats, 0, len(rows))
+	for _, row := range rows {
+		userName := ""
+		if row.UserName != nil {
+			userName = *row.UserName
+		}
+		devices = append(devices, viewmodels.DeviceStats{
+			DeviceID:           row.DeviceID,
+			UserID:             row.UserID,
+			UserName:           userName,
+			TotalPhones:        row.TotalPhones,
+			PendingCount:       row.PendingCount,
+			CalledCount:        row.CalledCount,
+			InterestedCount:    row.InterestedCount,
+			NotInterestedCount: row.NotInterestedCount,
+		})
+	}
+	return &viewmodels.GetDevicesStatsRsp{
+		Devices: devices,
+		Total:   len(devices),
+	}, nil
+}
+
 func (p ExcelService) RegisterDevice(c context.Context, commonParams *base.CommonParams, req *viewmodels.RegisterDeviceReq) (*viewmodels.RegisterDeviceRsp, error) {
 	if strings.TrimSpace(req.DeviceID) == "" {
 		return nil, errors.New("device_id is required")

@@ -18,6 +18,7 @@ type LoginReq struct {
 type LoginRsp struct {
 	Token    string `json:"token"`
 	Username string `json:"username"`
+	Role     string `json:"role"`
 }
 
 type GetUserDevicesRsp struct {

@@ -53,7 +53,7 @@ func (s *AuthService) Login(ctx context.Context, req *vm.LoginReq) (int64, *vm.L
 		return 0, nil, errors.New("invalid username or password")
 	}
 
-	return user.ID, &vm.LoginRsp{Username: user.Username}, nil
+	return user.ID, &vm.LoginRsp{Username: user.Username, Role: user.Role}, nil
 }
 
 func (s *AuthService) GetUserDevices(ctx context.Context, userID int64) (*vm.GetUserDevicesRsp, error) {

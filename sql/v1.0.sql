@@ -26,12 +26,18 @@ CREATE TABLE `user` (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
     username VARCHAR(64) NOT NULL COMMENT '用户名',
     password_hash VARCHAR(256) NOT NULL COMMENT '密码哈希',
+    role VARCHAR(16) NOT NULL DEFAULT 'user' COMMENT '角色：user普通用户，admin管理员',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
--- 给 user_device 表添加 user_id 字段
+-- 给 user_device 表添加 user_id 字段和唯一索引
 ALTER TABLE `user_device`
     ADD COLUMN user_id INT DEFAULT NULL COMMENT '用户ID' AFTER device_id,
-    ADD INDEX `idx_user_device_user_id` (`user_id`);
+    ADD INDEX `idx_user_device_user_id` (`user_id`),
+    ADD UNIQUE KEY `uk_user_device` (`device_id`);
+
+-- 给 user 表添加 role 字段
+ALTER TABLE `user`
+    ADD COLUMN role VARCHAR(16) NOT NULL DEFAULT 'user' COMMENT '角色：user普通用户，admin管理员' AFTER password_hash;

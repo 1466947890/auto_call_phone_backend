@@ -92,3 +92,43 @@ type GetClientPhoneReq struct {
 type GetClentPhoneRsp struct {
 	Phones []string `json:"phones"`
 }
+
+// ===== 接口：绑定设备到用户 =====
+
+type BindDeviceReq struct {
+	DeviceID string `json:"device_id" binding:"required"`
+	UserID   int64  `json:"user_id" binding:"required"`
+}
+
+type BindDeviceRsp struct {
+	DeviceID string `json:"device_id"`
+	UserID   int64  `json:"user_id"`
+}
+
+// ===== 接口：概览统计 =====
+
+type OverviewRsp struct {
+	TotalDevices   int         `json:"total_devices"`
+	TotalPhones    int64       `json:"total_phones"`
+	TotalUsers     int64       `json:"total_users"`
+	UnboundDevices int64       `json:"unbound_devices"`
+	PhonesByStatus map[int]int `json:"phones_by_status"`
+}
+
+// ===== 接口：设备统计列表 =====
+
+type DeviceStats struct {
+	DeviceID           string `json:"device_id"`
+	UserName           string `json:"user_name"`
+	UserID             *int64 `json:"user_id"`
+	TotalPhones        int64  `json:"total_phones"`
+	PendingCount       int64  `json:"pending_count"`
+	CalledCount        int64  `json:"called_count"`
+	InterestedCount    int64  `json:"interested_count"`
+	NotInterestedCount int64  `json:"not_interested_count"`
+}
+
+type GetDevicesStatsRsp struct {
+	Devices []DeviceStats `json:"devices"`
+	Total   int           `json:"total"`
+}

@@ -171,6 +171,46 @@ func UpdateClientPhoneStatus(c *gin.Context) {
 	handle.CommonRsp(c, rsp, err)
 }
 
+// @Summary 绑定设备到用户
+// @Description 将指定设备ID绑定到用户，后台管理接口
+// @Tags Excel模块
+// @Accept application/json
+// @Produce application/json
+// @Param req body viewmodels.BindDeviceReq true "绑定参数"
+// @Success 200 {object} viewmodels.BindDeviceRsp
+// @Router /v1/admin/excel/bind_device [POST]
+func BindDevice(c *gin.Context) {
+	var req viewmodels.BindDeviceReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handle.RespError(c, http.StatusBadRequest, err)
+		return
+	}
+	rsp, err := excelService.BindDevice(c, nil, &req)
+	handle.CommonRsp(c, rsp, err)
+}
+
+// @Summary 概览统计
+// @Description 获取系统概览统计，包括设备数、电话数、用户数及各状态分布
+// @Tags Excel模块
+// @Produce application/json
+// @Success 200 {object} viewmodels.OverviewRsp
+// @Router /v1/admin/excel/overview [GET]
+func GetOverview(c *gin.Context) {
+	rsp, err := excelService.GetOverview(c, nil)
+	handle.CommonRsp(c, rsp, err)
+}
+
+// @Summary 设备统计列表
+// @Description 获取所有设备的统计信息，包括绑定用户及各状态电话数量
+// @Tags Excel模块
+// @Produce application/json
+// @Success 200 {object} viewmodels.GetDevicesStatsRsp
+// @Router /v1/admin/excel/devices_stats [GET]
+func GetDevicesStats(c *gin.Context) {
+	rsp, err := excelService.GetDevicesStats(c, nil)
+	handle.CommonRsp(c, rsp, err)
+}
+
 // @Summary 注册设备唯一标识
 // @Description 注册设备唯一标识，如果设备已存在则不重复注册
 // @Tags Excel模块

@@ -21,13 +21,15 @@ func getJWTSecret() string {
 type Claims struct {
 	UserID   int64  `json:"user_id"`
 	Username string `json:"username"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID int64, username string) (string, error) {
+func GenerateToken(userID int64, username, role string) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
+		Role:     role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
@@ -67,6 +69,19 @@ func JWTAuth() gin.HandlerFunc {
 
 		c.Set("user_id", claims.UserID)
 		c.Set("username", claims.Username)
+		c.Set("role", claims.Role)
+		c.Next()
+	}
+}
+
+func AdminAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, _ := c.Get("role")
+		if role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "admin permission required"})
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }
