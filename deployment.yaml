@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: auto-call-phone
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: auto-call-phone
@@ -14,10 +14,10 @@ spec:
     spec:
       containers:
         - name: auto-call-phone
-          image: auto-call-phone:latest
-          imagePullPolicy: Never  # ⚠️ 关键：强制 K8s 使用本地镜像
+          image: 192.168.31.77:5000/auto_call_phone:v1.0
+          imagePullPolicy: Always
           ports:
-            - containerPort: 80
+            - containerPort: 8000
 ---
 apiVersion: v1
 kind: Service
@@ -27,7 +27,6 @@ spec:
   selector:
     app: auto-call-phone
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: LoadBalancer
+      - port: 80
+        targetPort: 8000
+  type: LoadBalancer  # 修改为 NodePort，方便本地/局域网直接访问

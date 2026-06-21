@@ -33,5 +33,5 @@ func initGin() {
 	excel.RegisterClient(apiV1Client.Group("/excel"))
 	auth.RegisterClient(apiV1Client.Group("/auth"))
 	index.RegisterClient(apiV1Client.Group("/"))
-	router.Run(":80")
+	router.Run(":8000")
 }

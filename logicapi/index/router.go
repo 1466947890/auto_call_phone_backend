@@ -8,6 +8,6 @@ import (
 
 func RegisterClient(router *gin.RouterGroup) {
 	router.GET("/", func(ctx *gin.Context) {
-		handle.Resp(ctx, 200, "ok1", nil)
+		handle.Resp(ctx, 200, "ok", nil)
 	})
 }
