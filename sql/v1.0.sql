@@ -41,3 +41,7 @@ ALTER TABLE `user_device`
 -- 给 user 表添加 role 字段
 ALTER TABLE `user`
     ADD COLUMN role VARCHAR(16) NOT NULL DEFAULT 'user' COMMENT '角色：user普通用户，admin管理员' AFTER password_hash;
+
+-- 插入默认管理员账号（用户名：admin，密码：123456）
+INSERT INTO `user` (`username`, `password_hash`, `role`) VALUES ('admin', '$2a$10$xYEE6yK/UFU5Ke3xwnJmOO/m5hM1W0XxzGoxlSptvapi6T2h4mGa2', 'admin')
+ON DUPLICATE KEY UPDATE `role` = 'admin';
