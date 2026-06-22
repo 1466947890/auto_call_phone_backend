@@ -1,4 +1,4 @@
-FROM golang:1.23.3
+FROM golang:1.26.3
 LABEL  author="北稚"
 WORKDIR /go/src/
 COPY . .
