@@ -182,12 +182,15 @@ func (p ExcelService) GetClientPhone(c context.Context, commonParams *base.Commo
 	if err != nil {
 		return nil, err
 	}
-	phones := make([]string, 0, len(rows))
+	phones := make([]viewmodels.ClientPhoneInfo, 0, len(rows))
 	for _, r := range rows {
 		if r.PhoneNumber == "" {
 			continue
 		}
-		phones = append(phones, r.PhoneNumber)
+		phones = append(phones, viewmodels.ClientPhoneInfo{
+			PhoneNumber: r.PhoneNumber,
+			CompanyName: r.Remarks,
+		})
 	}
 	return &viewmodels.GetClentPhoneRsp{Phones: phones}, nil
 }

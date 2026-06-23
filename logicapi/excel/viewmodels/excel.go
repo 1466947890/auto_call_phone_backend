@@ -89,8 +89,13 @@ type GetClientPhoneReq struct {
 	DeviceID string `json:"device_id"`
 }
 
+type ClientPhoneInfo struct {
+	PhoneNumber string `json:"phone_number"`
+	CompanyName string `json:"company_name"`
+}
+
 type GetClentPhoneRsp struct {
-	Phones []string `json:"phones"`
+	Phones []ClientPhoneInfo `json:"phones"`
 }
 
 // ===== 接口：绑定设备到用户 =====
