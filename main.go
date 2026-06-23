@@ -6,6 +6,7 @@ import (
 	"auto_call_phone/logicapi/auth"
 	"auto_call_phone/logicapi/excel"
 	"auto_call_phone/logicapi/index"
+	"auto_call_phone/logicapi/user"
 	"auto_call_phone/middleware"
 	"fmt"
 	"log"
@@ -42,6 +43,7 @@ func initGin() {
 	apiV1Admin := router.Group("/v1/admin")
 	apiV1Admin.Use(middleware.JWTAuth(), middleware.AdminAuth())
 	excel.RegisterAdmin(apiV1Admin.Group("/excel"))
+	user.RegisterAdmin(apiV1Admin.Group("/"))
 	apiV1Client := router.Group("/v1/client")
 	excel.RegisterClient(apiV1Client.Group("/excel"))
 	auth.RegisterClient(apiV1Client.Group("/auth"))

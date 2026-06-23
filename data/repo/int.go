@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -161,6 +162,98 @@ type DeviceStatsRow struct {
 	CalledCount        int64   `gorm:"column:called_count"`
 	InterestedCount    int64   `gorm:"column:interested_count"`
 	NotInterestedCount int64   `gorm:"column:not_interested_count"`
+}
+
+// GetUsersList 分页获取用户列表（支持关键词搜索）
+func GetUsersList(ctx context.Context, keyword string, page, limit int) ([]datamodels.User, int64, error) {
+	query := DB.WithContext(ctx).Model(&datamodels.User{})
+	if keyword != "" {
+		query = query.Where("username LIKE ?", "%"+keyword+"%")
+	}
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var users []datamodels.User
+	offset := (page - 1) * limit
+	if err := query.Order("id ASC").Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+	return users, total, nil
+}
+
+func CountUserDevices(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := DB.WithContext(ctx).Model(&datamodels.UserDevice{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
+}
+
+func CountUserPhones(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := DB.WithContext(ctx).Model(&datamodels.DevicePhone{}).
+		Joins("JOIN user_device ud ON device_phone.device_id = ud.device_id").
+		Where("ud.user_id = ?", userID).
+		Count(&count).Error
+	return count, err
+}
+
+type DeviceListRow struct {
+	DeviceID           string    `gorm:"column:device_id"`
+	UserID             *int64    `gorm:"column:user_id"`
+	UserName           *string   `gorm:"column:username"`
+	TotalPhones        int64     `gorm:"column:total_phones"`
+	PendingCount       int64     `gorm:"column:pending_count"`
+	CalledCount        int64     `gorm:"column:called_count"`
+	InterestedCount    int64     `gorm:"column:interested_count"`
+	NotInterestedCount int64     `gorm:"column:not_interested_count"`
+	CreatedAt          time.Time `gorm:"column:created_at"`
+}
+
+func GetDevicesList(ctx context.Context, status string, page, limit int) ([]DeviceListRow, int64, int64, int64, error) {
+	baseQuery := DB.WithContext(ctx).Table("user_device ud").
+		Joins("LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL").
+		Joins("LEFT JOIN user u ON ud.user_id = u.id")
+	switch status {
+	case "bound":
+		baseQuery = baseQuery.Where("ud.user_id IS NOT NULL")
+	case "unbound":
+		baseQuery = baseQuery.Where("ud.user_id IS NULL")
+	}
+	var total int64
+	if err := baseQuery.Select("COUNT(DISTINCT ud.id)").Scan(&total).Error; err != nil {
+		return nil, 0, 0, 0, err
+	}
+	var boundCount, unboundCount int64
+	DB.WithContext(ctx).Model(&datamodels.UserDevice{}).Where("user_id IS NOT NULL").Count(&boundCount)
+	DB.WithContext(ctx).Model(&datamodels.UserDevice{}).Where("user_id IS NULL").Count(&unboundCount)
+	offset := (page - 1) * limit
+	var rows []DeviceListRow
+	err := baseQuery.Select(`
+		ud.device_id, ud.user_id, u.username, ud.created_at,
+		COUNT(dp.id) AS total_phones,
+		COALESCE(SUM(CASE WHEN dp.status = 0 THEN 1 ELSE 0 END), 0) AS pending_count,
+		COALESCE(SUM(CASE WHEN dp.status = 1 THEN 1 ELSE 0 END), 0) AS called_count,
+		COALESCE(SUM(CASE WHEN dp.status = 2 THEN 1 ELSE 0 END), 0) AS interested_count,
+		COALESCE(SUM(CASE WHEN dp.status = 3 THEN 1 ELSE 0 END), 0) AS not_interested_count
+	`).Group("ud.id, ud.device_id, ud.user_id, u.username, ud.created_at").
+		Order("ud.id ASC").Offset(offset).Limit(limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+	return rows, total, boundCount, unboundCount, nil
+}
+
+func UnbindDevice(ctx context.Context, deviceID string) error {
+	result := DB.WithContext(ctx).Model(&datamodels.UserDevice{}).
+		Where("device_id = ?", deviceID).Update("user_id", nil)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 // GetDeviceStats 获取所有设备的统计数据
