@@ -25,10 +25,7 @@ func init() {
 // @Router /v1/admin/users [POST]
 func GetUsersList(c *gin.Context) {
 	var req vm.GetUsersListReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		handle.RespError(c, http.StatusBadRequest, err)
-		return
-	}
+	_ = c.ShouldBindJSON(&req)
 	rsp, err := userService.GetUsersList(c, nil, &req)
 	handle.CommonRsp(c, rsp, err)
 }
@@ -43,10 +40,7 @@ func GetUsersList(c *gin.Context) {
 // @Router /v1/admin/devices [POST]
 func GetDevicesList(c *gin.Context) {
 	var req vm.GetDevicesListReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		handle.RespError(c, http.StatusBadRequest, err)
-		return
-	}
+	_ = c.ShouldBindJSON(&req)
 	rsp, err := userService.GetDevicesList(c, nil, &req)
 	handle.CommonRsp(c, rsp, err)
 }

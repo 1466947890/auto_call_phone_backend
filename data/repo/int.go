@@ -210,35 +210,40 @@ type DeviceListRow struct {
 }
 
 func GetDevicesList(ctx context.Context, status string, page, limit int) ([]DeviceListRow, int64, int64, int64, error) {
-	baseQuery := DB.WithContext(ctx).Table("user_device ud").
-		Joins("LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL").
-		Joins("LEFT JOIN user u ON ud.user_id = u.id")
+	var whereClause string
 	switch status {
 	case "bound":
-		baseQuery = baseQuery.Where("ud.user_id IS NOT NULL")
+		whereClause = "AND ud.user_id IS NOT NULL"
 	case "unbound":
-		baseQuery = baseQuery.Where("ud.user_id IS NULL")
+		whereClause = "AND ud.user_id IS NULL"
 	}
+
 	var total int64
-	if err := baseQuery.Select("COUNT(DISTINCT ud.id)").Scan(&total).Error; err != nil {
+	countSQL := `SELECT COUNT(DISTINCT ud.id) FROM user_device ud
+		LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL
+		LEFT JOIN user u ON ud.user_id = u.id WHERE 1=1 ` + whereClause
+	if err := DB.WithContext(ctx).Raw(countSQL).Scan(&total).Error; err != nil {
 		return nil, 0, 0, 0, err
 	}
+
 	var boundCount, unboundCount int64
 	DB.WithContext(ctx).Model(&datamodels.UserDevice{}).Where("user_id IS NOT NULL").Count(&boundCount)
 	DB.WithContext(ctx).Model(&datamodels.UserDevice{}).Where("user_id IS NULL").Count(&unboundCount)
+
 	offset := (page - 1) * limit
 	var rows []DeviceListRow
-	err := baseQuery.Select(`
-		ud.device_id, ud.user_id, u.username, ud.created_at,
+	dataSQL := `SELECT ud.device_id, ud.user_id, u.username, ud.created_at,
 		COUNT(dp.id) AS total_phones,
 		COALESCE(SUM(CASE WHEN dp.status = 0 THEN 1 ELSE 0 END), 0) AS pending_count,
 		COALESCE(SUM(CASE WHEN dp.status = 1 THEN 1 ELSE 0 END), 0) AS called_count,
 		COALESCE(SUM(CASE WHEN dp.status = 2 THEN 1 ELSE 0 END), 0) AS interested_count,
 		COALESCE(SUM(CASE WHEN dp.status = 3 THEN 1 ELSE 0 END), 0) AS not_interested_count
-	`).Group("ud.id, ud.device_id, ud.user_id, u.username, ud.created_at").
-		Order("ud.id ASC").Offset(offset).Limit(limit).
-		Scan(&rows).Error
-	if err != nil {
+		FROM user_device ud
+		LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL
+		LEFT JOIN user u ON ud.user_id = u.id WHERE 1=1 ` + whereClause +
+		` GROUP BY ud.id, ud.device_id, ud.user_id, u.username, ud.created_at
+		ORDER BY ud.id ASC LIMIT ? OFFSET ?`
+	if err := DB.WithContext(ctx).Raw(dataSQL, limit, offset).Scan(&rows).Error; err != nil {
 		return nil, 0, 0, 0, err
 	}
 	return rows, total, boundCount, unboundCount, nil
