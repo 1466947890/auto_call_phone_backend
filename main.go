@@ -2,7 +2,6 @@ package main
 
 import (
 	"auto_call_phone/data/repo"
-	_ "auto_call_phone/docs"
 	"auto_call_phone/logicapi/auth"
 	"auto_call_phone/logicapi/excel"
 	"auto_call_phone/logicapi/index"
@@ -12,8 +11,6 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // @title 自动打电话后端 API
@@ -48,6 +45,5 @@ func initGin() {
 	excel.RegisterClient(apiV1Client.Group("/excel"))
 	auth.RegisterClient(apiV1Client.Group("/auth"))
 	index.RegisterClient(apiV1Client.Group("/"))
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.Run(":8000")
 }
