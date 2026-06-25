@@ -1,4 +1,4 @@
-FROM golang:1.26.3
+FROM 192.168.31.103:80/golang:1.26.3
 
 LABEL author="北稚"
 
