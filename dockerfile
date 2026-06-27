@@ -13,6 +13,8 @@ WORKDIR /go/src/app
 # 2. 先拷贝依赖清单
 COPY go.mod go.sum ./
 
+RUN export DOCKER_BUILDKIT=1
+
 # 3. 【加速 1】挂载 Go 模块缓存，避免重复下载
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
@@ -29,7 +31,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # 第二阶段：运行阶段
 # 使用轻量级 alpine 作为运行环境
-FROM alpine:latest
+FROM 192.168.31.103:80/hub/library/alpine:latest
 
 # 安装 bash 和基础证书（如果你的 build.sh 用到 bash）
 RUN apk add --no-cache bash ca-certificates
