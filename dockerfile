@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # 第一阶段：编译阶段
-FROM golang:1.22-alpine AS builder
+FROM 192.168.31.103:80/hub/library/golang:1.26.3 AS builder
 
 # 1. 设置环境变量
 # CGO_ENABLED=0 保证静态编译，在 alpine 运行不依赖 glibc
