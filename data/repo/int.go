@@ -210,19 +210,32 @@ type DeviceListRow struct {
 }
 
 func GetDevicesList(ctx context.Context, status string, page, limit int) ([]DeviceListRow, int64, int64, int64, error) {
-	var whereClause string
-	switch status {
-	case "bound":
-		whereClause = "AND ud.user_id IS NOT NULL"
-	case "unbound":
-		whereClause = "AND ud.user_id IS NULL"
+	query := DB.WithContext(ctx).Table("user_device ud").
+		Select(`ud.device_id, ud.user_id, u.username, ud.created_at,
+			COUNT(dp.id) AS total_phones,
+			COALESCE(SUM(CASE WHEN dp.status = 0 THEN 1 ELSE 0 END), 0) AS pending_count,
+			COALESCE(SUM(CASE WHEN dp.status = 1 THEN 1 ELSE 0 END), 0) AS called_count,
+			COALESCE(SUM(CASE WHEN dp.status = 2 THEN 1 ELSE 0 END), 0) AS interested_count,
+			COALESCE(SUM(CASE WHEN dp.status = 3 THEN 1 ELSE 0 END), 0) AS not_interested_count`).
+		Joins("LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL").
+		Joins("LEFT JOIN user u ON ud.user_id = u.id").
+		Group("ud.id, ud.device_id, ud.user_id, u.username, ud.created_at").
+		Order("ud.id ASC")
+
+	if status == "bound" {
+		query = query.Where("ud.user_id IS NOT NULL")
+	} else if status == "unbound" {
+		query = query.Where("ud.user_id IS NULL")
 	}
 
 	var total int64
-	countSQL := `SELECT COUNT(DISTINCT ud.id) FROM user_device ud
-		LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL
-		LEFT JOIN user u ON ud.user_id = u.id WHERE 1=1 ` + whereClause
-	if err := DB.WithContext(ctx).Raw(countSQL).Scan(&total).Error; err != nil {
+	countQuery := DB.WithContext(ctx).Model(&datamodels.UserDevice{})
+	if status == "bound" {
+		countQuery = countQuery.Where("user_id IS NOT NULL")
+	} else if status == "unbound" {
+		countQuery = countQuery.Where("user_id IS NULL")
+	}
+	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, 0, 0, err
 	}
 
@@ -232,18 +245,7 @@ func GetDevicesList(ctx context.Context, status string, page, limit int) ([]Devi
 
 	offset := (page - 1) * limit
 	var rows []DeviceListRow
-	dataSQL := `SELECT ud.device_id, ud.user_id, u.username, ud.created_at,
-		COUNT(dp.id) AS total_phones,
-		COALESCE(SUM(CASE WHEN dp.status = 0 THEN 1 ELSE 0 END), 0) AS pending_count,
-		COALESCE(SUM(CASE WHEN dp.status = 1 THEN 1 ELSE 0 END), 0) AS called_count,
-		COALESCE(SUM(CASE WHEN dp.status = 2 THEN 1 ELSE 0 END), 0) AS interested_count,
-		COALESCE(SUM(CASE WHEN dp.status = 3 THEN 1 ELSE 0 END), 0) AS not_interested_count
-		FROM user_device ud
-		LEFT JOIN device_phone dp ON ud.device_id = dp.device_id AND dp.deleted_at IS NULL
-		LEFT JOIN user u ON ud.user_id = u.id WHERE 1=1 ` + whereClause +
-		` GROUP BY ud.id, ud.device_id, ud.user_id, u.username, ud.created_at
-		ORDER BY ud.id ASC LIMIT ? OFFSET ?`
-	if err := DB.WithContext(ctx).Raw(dataSQL, limit, offset).Scan(&rows).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Scan(&rows).Error; err != nil {
 		return nil, 0, 0, 0, err
 	}
 	return rows, total, boundCount, unboundCount, nil
