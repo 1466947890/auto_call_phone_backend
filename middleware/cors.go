@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"auto_call_phone/common/config"
 	"strings"
 
 	"github.com/gin-contrib/cors"
@@ -9,16 +10,29 @@ import (
 
 // CORSMiddleware 返回配置好的CORS中间件
 func CORSMiddleware() gin.HandlerFunc {
+	corsCfg := config.App.CORS
 	return cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
-			if strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") {
-				return true
+			for _, allowOrigin := range corsCfg.AllowOrigins {
+				if origin == allowOrigin {
+					return true
+				}
 			}
-			return strings.Contains(origin, "beizhi.online")
+			for _, prefix := range corsCfg.AllowOriginPrefixes {
+				if strings.HasPrefix(origin, prefix) {
+					return true
+				}
+			}
+			for _, contains := range corsCfg.AllowOriginContains {
+				if strings.Contains(origin, contains) {
+					return true
+				}
+			}
+			return false
 		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowMethods:     corsCfg.AllowMethods,
+		AllowHeaders:     corsCfg.AllowHeaders,
+		ExposeHeaders:    corsCfg.ExposeHeaders,
+		AllowCredentials: corsCfg.AllowCredentials,
 	})
 }

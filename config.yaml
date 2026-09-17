@@ -1,0 +1,40 @@
+server:
+  port: 8000
+
+mysql:
+  # 优先使用 dsn；如果 dsn 为空，则使用下面的 host/port/user/password/database 拼接
+  dsn: ""
+  host: "192.168.31.77"
+  port: "3306"
+  user: "auto_call_phone"
+  password: "aiHakWpFm3HdBFyz"
+  database: "auto_call_phone"
+
+jwt:
+  secret: "auto_call_phone_secret_2024"
+
+cors:
+  allow_origins:
+    - "auto.beizhi.online"
+    - "http://auto.beizhi.online"
+    - "https://auto.beizhi.online"
+  allow_origin_prefixes:
+    - "http://localhost"
+    - "http://127.0.0.1"
+  allow_origin_contains:
+    - "beizhi.online"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allow_headers:
+    - "Origin"
+    - "Content-Type"
+    - "Accept"
+    - "Authorization"
+    - "X-Requested-With"
+  expose_headers:
+    - "Content-Length"
+  allow_credentials: true

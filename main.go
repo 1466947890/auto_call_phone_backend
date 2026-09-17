@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auto_call_phone/common/config"
 	"auto_call_phone/data/repo"
 	"auto_call_phone/logicapi/auth"
 	"auto_call_phone/logicapi/excel"
@@ -23,6 +24,10 @@ import (
 // @name Authorization
 
 func main() {
+	if err := config.Load(""); err != nil {
+		log.Fatalln("fail to load config : ", err.Error())
+	}
+
 	// 数据库初始化
 	fmt.Println("init mysql .....")
 	if err := repo.InitGrom(); err != nil {
@@ -45,5 +50,7 @@ func initGin() {
 	excel.RegisterClient(apiV1Client.Group("/excel"))
 	auth.RegisterClient(apiV1Client.Group("/auth"))
 	index.RegisterClient(apiV1Client.Group("/"))
-	router.Run(":8000")
+	if err := router.Run(fmt.Sprintf(":%d", config.App.Server.Port)); err != nil {
+		log.Fatalln("fail to start server : ", err.Error())
+	}
 }

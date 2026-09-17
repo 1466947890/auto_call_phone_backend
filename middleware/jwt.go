@@ -1,21 +1,16 @@
 package middleware
 
 import (
+	"auto_call_phone/common/config"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(getJWTSecret())
-
-func getJWTSecret() string {
-	if s := os.Getenv("JWT_SECRET"); s != "" {
-		return s
-	}
-	return "auto_call_phone_secret_2024"
+func jwtSecret() []byte {
+	return []byte(config.App.JWT.Secret)
 }
 
 type Claims struct {
@@ -32,7 +27,7 @@ func GenerateToken(userID int64, username, role string) (string, error) {
 		Role:     role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(jwtSecret())
 }
 
 func JWTAuth() gin.HandlerFunc {
@@ -52,7 +47,7 @@ func JWTAuth() gin.HandlerFunc {
 		}
 
 		token, err := jwt.ParseWithClaims(parts[1], &Claims{}, func(t *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
+			return jwtSecret(), nil
 		})
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})

@@ -1,10 +1,10 @@
 package repo
 
 import (
+	"auto_call_phone/common/config"
 	"auto_call_phone/data/datamodels"
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -16,15 +16,11 @@ var (
 )
 
 func InitGrom() error {
-	dsn := os.Getenv("MYSQL_DSN")
+	mysqlCfg := config.App.MySQL
+	dsn := mysqlCfg.DSN
 	if dsn == "" {
-		host := getEnv("MYSQL_HOST", "192.168.31.77")
-		port := getEnv("MYSQL_PORT", "3306")
-		user := getEnv("MYSQL_USER", "auto_call_phone")
-		pass := getEnv("MYSQL_PASSWORD", "aiHakWpFm3HdBFyz")
-		dbname := getEnv("MYSQL_DATABASE", "auto_call_phone")
 		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-			user, pass, host, port, dbname)
+			mysqlCfg.User, mysqlCfg.Password, mysqlCfg.Host, mysqlCfg.Port, mysqlCfg.Database)
 	}
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -36,13 +32,6 @@ func InitGrom() error {
 		return err
 	}
 	return nil
-}
-
-func getEnv(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
 }
 
 // GetPendingPhonesByDeviceID 获取指定设备ID的待处理电话号码列表
